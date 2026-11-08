@@ -40,7 +40,14 @@ header button.w{background:#fff;color:var(--pri);font-weight:600}
 #transcript{height:330px;overflow:auto;border:1px solid var(--line);border-radius:6px;padding:8px;background:#fafcfc}
 .ln{display:flex;gap:6px;padding:3px 0;border-bottom:1px dashed #eee}
 .ln .t{color:var(--mute);font:12px Consolas,monospace;min-width:52px;padding-top:2px}
-.ln .s{font-weight:600;min-width:60px}
+.ln{border-left:4px solid transparent;padding-left:6px!important;flex-wrap:wrap;align-items:flex-start}
+.ln select.s{width:auto;max-width:60%;padding:1px 4px;font-weight:700;border:1px solid transparent;background:transparent;font-size:13px}
+.ln select.s:focus{border-color:var(--line)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
+.chip{padding:8px 12px;border-radius:999px;background:#e6eeee;border:2px solid transparent;font-size:14px}
+.chip.on{background:var(--pri);color:#fff;border-color:var(--pri)}
+.chip.none{background:#fff;border:1px dashed var(--line);color:var(--mute)}
+@media(max-width:640px){ #lines .ln .x{flex:1 1 100%;padding-left:4px} }
 .ln .x{flex:1;outline:none}
 .del{background:none!important;padding:0 4px;color:var(--mute)}
 #interim{color:var(--mute);font-style:italic;padding:4px 0}
@@ -200,12 +207,11 @@ header .acts{display:contents}
     </div>
     <div id="meter"><div></div></div>
     <div id="srStatus" class="note" style="font-weight:600">Status transkrip: siap</div>
-    <div class="row" style="margin-top:8px">
-      <div><label>Bahasa transkrip</label>
-        <select id="lang"><option value="id-ID">Bahasa Indonesia</option><option value="en-US">English</option><option value="jv-ID">Basa Jawa</option><option value="su-ID">Basa Sunda</option></select></div>
-      <div><label>Pembicara saat ini (label otomatis)</label>
-        <input id="speaker" list="spkList" placeholder="mis. Ketua PMKP"><datalist id="spkList"></datalist></div>
-    </div>
+    <label>Bahasa transkrip</label>
+    <select id="lang"><option value="id-ID">Bahasa Indonesia</option><option value="en-US">English</option><option value="jv-ID">Basa Jawa</option><option value="su-ID">Basa Sunda</option></select>
+    <label><b>Siapa yang sedang bicara?</b> Ketuk namanya — kalimat berikutnya diberi nama itu</label>
+    <div class="chips" id="spkChips"></div>
+    <input id="speaker" list="spkList" placeholder="atau ketik nama lain di sini" style="margin-top:6px"><datalist id="spkList"></datalist>
     <label><input type="checkbox" id="recAudio" checked style="width:auto"> Simpan juga rekaman audio <span id="recAudioHint"></span></label>
     <label>Transkrip (klik teks untuk mengedit)</label>
     <div id="transcript"><div id="lines"></div><div id="interim"></div></div>
@@ -327,10 +333,32 @@ function renderRows(k){
 function addRow(k){ cur[k].push({issue:'',task:'',pic:'',due:'',status:'Belum'}); renderRows(k); }
 
 /* ---------- Transkrip ---------- */
+/* ---------- Nama pembicara ---------- */
+// Daftar nama: pimpinan rapat, peserta, lalu nama yang sudah dipakai di transkrip
+function speakers(){
+  return [...new Set([$('leader').value, ...($('people').value||'').split('\n').map(p=>p.split('|')[0]), $('writer').value,
+    ...cur.lines.map(l=>l.s), $('speaker').value].map(s=>(s||'').trim()).filter(Boolean))];
+}
+const SPK_COLORS=['#0f766e','#c62828','#1f5fbf','#b45309','#7b1fa2','#2e7d32','#ad1457','#455a64','#00838f','#6d4c41'];
+const spkColor=s=>{ if(!s) return 'transparent'; const i=speakers().indexOf(s); return SPK_COLORS[(i<0?0:i)%SPK_COLORS.length]; };
+function renderChips(){
+  const curS=$('speaker').value.trim();
+  $('spkChips').innerHTML=speakers().map(s=>`<button class="chip${s===curS?' on':''}" style="${s===curS?'':'border-color:'+spkColor(s)}" data-s="${esc(s)}">${esc(s)}</button>`).join('')
+    +`<button class="chip none${curS?'':' on'}" data-s="">Tanpa nama</button>`;
+  $('spkList').innerHTML=speakers().map(s=>`<option value="${esc(s)}">`).join('');
+}
+$('spkChips').addEventListener('click',e=>{ const b=e.target.closest('.chip'); if(!b) return; $('speaker').value=b.dataset.s; renderChips(); });
+$('speaker').addEventListener('input',renderChips);
+['people','leader','writer'].forEach(f=>$(f).addEventListener('input',()=>{ renderChips(); }));
+function setLineSpk(i,v){ cur.lines[i].s=v; renderLines(); }
+
 function renderLines(){
-  $('lines').innerHTML=cur.lines.map((l,i)=>`<div class="ln"><span class="t">${fmt(l.t).slice(3)}</span><span class="s" contenteditable onblur="cur.lines[${i}].s=this.innerText.trim()">${esc(l.s)}</span><span class="x" contenteditable onblur="cur.lines[${i}].x=this.innerText.trim()">${esc(l.x)}</span><button class="del" onclick="cur.lines.splice(${i},1);renderLines()">✕</button></div>`).join('');
-  const spk=[...new Set([...cur.lines.map(l=>l.s),...($('people').value||'').split('\n').map(p=>p.split('|')[0].trim())].filter(Boolean))];
-  $('spkList').innerHTML=spk.map(s=>`<option value="${esc(s)}">`).join('');
+  const names=speakers();
+  $('lines').innerHTML=cur.lines.map((l,i)=>{
+    const opts=['',...names.includes(l.s)||!l.s?names:[l.s,...names]].map(s=>`<option value="${esc(s)}" ${s===l.s?'selected':''}>${s?esc(s):'— pilih nama —'}</option>`).join('');
+    return `<div class="ln" style="border-left-color:${spkColor(l.s)}"><span class="t">${fmt(l.t).slice(3)}</span><select class="s" style="color:${l.s?spkColor(l.s):'var(--mute)'}" onchange="setLineSpk(${i},this.value)">${opts}</select><span class="x" contenteditable onblur="cur.lines[${i}].x=this.innerText.trim()">${esc(l.x)}</span><button class="del" onclick="cur.lines.splice(${i},1);renderLines()">✕</button></div>`;
+  }).join('');
+  renderChips();
   const b=$('transcript'); b.scrollTop=b.scrollHeight;
 }
 $('people').addEventListener('change',renderLines);
@@ -338,7 +366,7 @@ function pushLine(text){
   text=text.trim(); if(!text) return;
   // Chrome Android kadang mengirim kalimat yang sama berulang/menumpuk: gabungkan
   const last=cur.lines[cur.lines.length-1];
-  if(last && now()-last.t<15000){
+  if(last && now()-last.t<15000 && last.s===$('speaker').value.trim()){
     const a=last.x.toLowerCase(), b=text.toLowerCase();
     if(a===b || a.endsWith(b)) return;
     if(b.startsWith(a)){ last.x=text.charAt(0).toUpperCase()+text.slice(1); renderLines(); return; }
