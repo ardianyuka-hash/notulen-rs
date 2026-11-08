@@ -3,17 +3,22 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Notulen Rapat RS</title>
-<meta name="theme-color" content="#0f766e">
+<title>Notulensi Elektronik Mutiara Bunda</title>
+<meta name="theme-color" content="#1d5fa8">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
 <style>
-:root{--bg:#f3f6f6;--card:#fff;--ink:#1d2330;--mute:#6b7280;--line:#dfe5e5;--pri:#0f766e;--red:#c62828;--green:#2e7d32}
+:root{--bg:#f3f6f6;--card:#fff;--ink:#1d2330;--mute:#6b7280;--line:#dfe3ea;--pri:#1d5fa8;--red:#c62828;--green:#2e7d32}
 *{box-sizing:border-box}
 body{margin:0;font-family:Segoe UI,system-ui,sans-serif;background:var(--bg);color:var(--ink);font-size:14px}
 header{background:var(--pri);color:#fff;padding:12px 20px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-header h1{font-size:18px;margin:0;flex:1;min-width:240px}
+header{background:linear-gradient(90deg,var(--pri),#174c88);border-bottom:4px solid var(--red)}
+.brand{display:flex;align-items:center;gap:10px;flex:1;min-width:240px}
+.brand img{width:52px;height:52px;border-radius:50%;background:#fff;padding:2px;flex:none}
+.brand div{display:flex;flex-direction:column;line-height:1.15}
+.brand b{font-size:20px;letter-spacing:1.5px;white-space:nowrap}
+.brand small{font-size:12px;opacity:.9}
 main{max-width:1240px;margin:0 auto;padding:16px;display:grid;grid-template-columns:1fr 1fr;gap:16px}
 @media(max-width:900px){main{grid-template-columns:1fr}}
 .card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px}
@@ -27,7 +32,7 @@ textarea{resize:vertical}
 button{font:inherit;border:0;border-radius:6px;padding:7px 12px;cursor:pointer;background:#e6eeee;color:var(--ink)}
 button.red{background:var(--red);color:#fff}
 button.pri{background:var(--pri);color:#fff}
-.auto{margin-top:12px;padding:10px;border:1px dashed var(--pri);border-radius:8px;background:#f0f8f7}
+.auto{margin-top:12px;padding:10px;border:1px dashed var(--pri);border-radius:8px;background:#eef4fb}
 .auto details{margin-top:4px} .auto summary{cursor:pointer;color:var(--pri)}
 tr.fresh td{background:#fffbe6}
 button.green{background:var(--green);color:#fff}
@@ -76,15 +81,17 @@ header .acts{display:contents}
 @media(max-width:640px){
   body{font-size:15px}
   input,textarea,select{font-size:16px} /* cegah zoom otomatis di Android */
-  header{padding:10px 12px;position:sticky;top:0;z-index:20;gap:6px}
-  header h1{font-size:15px;min-width:100%}
+  header{padding:10px 12px;gap:8px}
+  .brand{min-width:100%}
+  .brand img{width:44px;height:44px}
+  .brand b{font-size:18px}
   header .acts{display:flex;gap:6px;overflow-x:auto;width:100%;padding-bottom:2px;-webkit-overflow-scrolling:touch}
   header button{white-space:nowrap;padding:8px 10px}
   main{padding:10px;gap:10px}
   .card{padding:12px}
   .row,.row3{grid-template-columns:1fr;gap:0}
   #recCard{position:relative}
-  #recCard .bar.ctl{position:sticky;top:96px;background:#fff;z-index:10;padding:6px 0}
+  #recCard .bar.ctl{position:sticky;top:0;background:#fff;z-index:10;padding:6px 0}
   #recCard .bar.ctl button{flex:1;padding:12px 6px;font-size:15px}
   .timer{font-size:22px;min-width:auto}
   #transcript{height:260px}
@@ -129,7 +136,10 @@ header .acts{display:contents}
 </head>
 <body>
 <header>
-  <h1>🏥 Rekam, Transkrip &amp; Notulen Rapat — Format Akreditasi RS</h1>
+  <div class="brand">
+    <img src="logo.png" alt="Logo Mutiara Bunda">
+    <div><small>Aplikasi Notulensi Elektronik</small><b>MUTIARA BUNDA</b><small>Format Akreditasi Rumah Sakit</small></div>
+  </div>
   <div class="acts">
   <button class="w" id="installBtn">📲 Pasang Aplikasi</button>
   <button onclick="newMeeting()">Rapat Baru</button>
@@ -145,7 +155,7 @@ header .acts{display:contents}
   <!-- 1. Identitas RS -->
   <section class="card">
     <h2>1. Identitas Rumah Sakit (Kop Surat)</h2>
-    <label>Nama Rumah Sakit</label><input id="rs" placeholder="RSU Contoh Sehat">
+    <label>Nama Rumah Sakit</label><input id="rs" placeholder="RS Mutiara Bunda">
     <label>Alamat, Telp, Email</label><input id="rsAddr" placeholder="Jl. Merdeka No. 1, Kota — Telp (021) 123456 — rs@contoh.id">
     <label>Logo RS (opsional)</label><input type="file" accept="image/*" id="logoIn">
     <img id="logoPrev" alt="logo">
@@ -319,10 +329,12 @@ const ls = { get(k,d){ try{ return JSON.parse(localStorage.getItem(k)) ?? d; }ca
              set(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); return true; }catch(e){ alert('Penyimpanan penuh / gagal: '+e.message+'\nCoba hapus rapat lama atau kurangi foto.'); return false; } } };
 
 /* ---------- Identitas RS ---------- */
-function loadRS(){ const r=ls.get('rsInfo',{}); RSF.forEach(f=>$(f).value=r[f]||''); logo=r.logo||''; showLogo(); }
+const DEF_LOGO='logo.png', DEF_RS='RS Mutiara Bunda';
+function loadRS(){ const r=ls.get('rsInfo',null)||{rs:DEF_RS}; RSF.forEach(f=>$(f).value=r[f]||''); logo=r.logo||''; showLogo(); }
 function saveRS(){ const r={logo}; RSF.forEach(f=>r[f]=$(f).value); ls.set('rsInfo',r); }
 RSF.forEach(f=>$(f).addEventListener('change',saveRS));
-function showLogo(){ $('logoPrev').src=logo; $('logoPrev').style.display=logo?'block':'none'; }
+// Tanpa unggahan logo, kop surat memakai logo Mutiara Bunda
+function showLogo(){ $('logoPrev').src=logo||DEF_LOGO; $('logoPrev').style.display='block'; }
 function shrink(file,max,cb){
   const fr=new FileReader(); fr.onload=()=>{ const im=new Image(); im.onload=()=>{
     const k=Math.min(1,max/Math.max(im.width,im.height)); const c=document.createElement('canvas');
@@ -688,7 +700,7 @@ function exportTxt(){
 }
 
 /* ---------- Cetak ---------- */
-function kop(r){ return `<div class="kop">${r.logo?`<img src="${r.logo}">`:''}<div class="k"><b>${esc(r.rs||'NAMA RUMAH SAKIT')}</b><span>${esc(r.rsAddr||'')}</span></div>${r.logo?'<div style="width:70px"></div>':''}</div>`; }
+function kop(r){ return `<div class="kop"><img src="${r.logo||DEF_LOGO}"><div class="k"><b>${esc(r.rs||DEF_RS)}</b><span>${esc(r.rsAddr||'')}</span></div><div style="width:70px"></div></div>`; }
 const ttdBox=(role,name,job,nip)=>`<div>${role}<br>${esc(job||'')}<div class="sp"></div><b><u>${esc(name||'(..............................)')}</u></b>${nip?`<br>NIP/NIK. ${esc(nip)}`:''}</div>`;
 const pre=s=>`<div class="pre">${esc(s||'-')}</div>`;
 const foot=jenis=>`<div class="foot">${esc(jenis)} · ${esc(cur.unit||'')} · ${esc(cur.no||'')}</div>`;

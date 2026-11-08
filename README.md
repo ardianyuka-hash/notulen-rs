@@ -1,6 +1,6 @@
-# Notulen Rapat RS
+# Aplikasi Notulensi Elektronik MUTIARA BUNDA
 
-Aplikasi web (PWA) untuk merekam rapat, membuat transkrip otomatis Bahasa Indonesia, dan mencetak Undangan, Daftar Hadir, serta Notulen sesuai format dokumen akreditasi rumah sakit.
+Format akreditasi rumah sakit. Aplikasi web (PWA) untuk merekam rapat, membuat transkrip otomatis Bahasa Indonesia dengan nama pembicara dari daftar hadir, menyusun kesimpulan dan rencana tindak lanjut (RTL) otomatis, serta mencetak Undangan, Daftar Hadir, dan Notulen.
 
 Buka di Chrome (HP Android atau komputer), lalu pilih menu ⋮ → **Instal aplikasi**.
 
