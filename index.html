@@ -1,0 +1,507 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Notulen Rapat RS</title>
+<meta name="theme-color" content="#0f766e">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+:root{--bg:#f3f6f6;--card:#fff;--ink:#1d2330;--mute:#6b7280;--line:#dfe5e5;--pri:#0f766e;--red:#c62828;--green:#2e7d32}
+*{box-sizing:border-box}
+body{margin:0;font-family:Segoe UI,system-ui,sans-serif;background:var(--bg);color:var(--ink);font-size:14px}
+header{background:var(--pri);color:#fff;padding:12px 20px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+header h1{font-size:18px;margin:0;flex:1;min-width:240px}
+main{max-width:1240px;margin:0 auto;padding:16px;display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:900px){main{grid-template-columns:1fr}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px}
+.card h2{font-size:15px;margin:0 0 10px;color:var(--pri)}
+.full{grid-column:1/-1}
+label{display:block;font-size:12px;color:var(--mute);margin:8px 0 3px}
+input,textarea,select{width:100%;padding:7px 8px;border:1px solid var(--line);border-radius:6px;font:inherit;background:#fff;color:inherit}
+textarea{resize:vertical}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+button{font:inherit;border:0;border-radius:6px;padding:7px 12px;cursor:pointer;background:#e6eeee;color:var(--ink)}
+button.red{background:var(--red);color:#fff}
+button.green{background:var(--green);color:#fff}
+button:disabled{opacity:.45;cursor:not-allowed}
+header button{background:rgba(255,255,255,.18);color:#fff}
+header button.w{background:#fff;color:var(--pri);font-weight:600}
+.bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.timer{font:600 26px Consolas,monospace;min-width:120px}
+.dot{width:12px;height:12px;border-radius:50%;background:#bbb;display:inline-block}
+.dot.on{background:var(--red);animation:blink 1s infinite}
+@keyframes blink{50%{opacity:.25}}
+#meter{height:6px;background:var(--line);border-radius:3px;overflow:hidden;margin-top:10px}
+#meter div{height:100%;width:0;background:var(--green);transition:width .08s}
+#transcript{height:330px;overflow:auto;border:1px solid var(--line);border-radius:6px;padding:8px;background:#fafcfc}
+.ln{display:flex;gap:6px;padding:3px 0;border-bottom:1px dashed #eee}
+.ln .t{color:var(--mute);font:12px Consolas,monospace;min-width:52px;padding-top:2px}
+.ln .s{font-weight:600;min-width:60px}
+.ln .x{flex:1;outline:none}
+.del{background:none!important;padding:0 4px;color:var(--mute)}
+#interim{color:var(--mute);font-style:italic;padding:4px 0}
+.note{font-size:12px;color:var(--mute);margin-top:6px}
+.warn{background:#fff4e5;border:1px solid #ffd59a;padding:8px;border-radius:6px;font-size:13px;margin-bottom:10px;display:none}
+table.ed{width:100%;border-collapse:collapse}
+table.ed td,table.ed th{border:1px solid var(--line);padding:3px}
+table.ed th{background:#eef4f4;font-size:12px}
+table.ed td input,table.ed td select{border:0;padding:4px}
+audio{width:100%;margin-top:10px}
+#list li{display:flex;justify-content:space-between;gap:8px;padding:6px 0;border-bottom:1px solid var(--line)}
+#list{list-style:none;padding:0;margin:0;max-height:220px;overflow:auto}
+.thumbs{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.thumbs div{position:relative}
+.thumbs img{height:80px;border-radius:6px;border:1px solid var(--line)}
+.thumbs button{position:absolute;top:2px;right:2px;padding:0 6px;background:#fff}
+#logoPrev{height:48px;display:none;margin-top:6px}
+#installBtn{display:none}
+header .acts{display:contents}
+
+/* ===== Layar HP ===== */
+@media(max-width:640px){
+  body{font-size:15px}
+  input,textarea,select{font-size:16px} /* cegah zoom otomatis di Android */
+  header{padding:10px 12px;position:sticky;top:0;z-index:20;gap:6px}
+  header h1{font-size:15px;min-width:100%}
+  header .acts{display:flex;gap:6px;overflow-x:auto;width:100%;padding-bottom:2px;-webkit-overflow-scrolling:touch}
+  header button{white-space:nowrap;padding:8px 10px}
+  main{padding:10px;gap:10px}
+  .card{padding:12px}
+  .row,.row3{grid-template-columns:1fr;gap:0}
+  #recCard{position:relative}
+  #recCard .bar.ctl{position:sticky;top:96px;background:#fff;z-index:10;padding:6px 0}
+  #recCard .bar.ctl button{flex:1;padding:12px 6px;font-size:15px}
+  .timer{font-size:22px;min-width:auto}
+  #transcript{height:260px}
+  table.ed{display:block;overflow-x:auto;white-space:nowrap}
+  table.ed td input{min-width:130px}
+  table.ed td input[type=date]{min-width:140px}
+  button{padding:10px 12px}
+}
+
+/* ===== Cetak ===== */
+#print{display:none}
+@media print{
+  @page{size:A4;margin:15mm 18mm}
+  body{background:#fff;font-family:"Times New Roman",serif;font-size:12pt;color:#000}
+  header,main{display:none!important}
+  #print{display:block}
+  .kop{display:flex;align-items:center;gap:14px;border-bottom:3px double #000;padding-bottom:6px;margin-bottom:12px}
+  .kop img{height:70px}
+  .kop .k{flex:1;text-align:center}
+  .kop .k b{font-size:15pt;display:block;text-transform:uppercase}
+  .kop .k span{font-size:10pt}
+  h1.jd{text-align:center;font-size:13pt;margin:0;text-transform:uppercase;text-decoration:underline}
+  .no{text-align:center;margin-bottom:12px}
+  table.info td{border:0;padding:1px 4px;vertical-align:top}
+  h3{font-size:12pt;margin:12px 0 5px;text-transform:uppercase}
+  table.grid{width:100%;border-collapse:collapse}
+  table.grid td,table.grid th{border:1px solid #000;padding:4px 6px;font-size:11pt;vertical-align:top}
+  table.grid th{background:#e8e8e8;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  table.grid tr{page-break-inside:avoid}
+  .pre{white-space:pre-wrap;text-align:justify}
+  .tr p{margin:2px 0;text-align:justify;font-size:11pt}
+  .ttd{display:flex;justify-content:space-between;margin-top:28px;page-break-inside:avoid}
+  .ttd div{width:45%;text-align:center}
+  .ttd .sp{height:65px}
+  .ttdc{text-align:center;margin-top:18px;page-break-inside:avoid}
+  .pb{page-break-before:always}
+  .foto{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .foto img{width:100%;max-height:85mm;object-fit:cover;border:1px solid #000}
+  .foot{font-size:9pt;color:#444;margin-top:14px;border-top:1px solid #999;padding-top:3px}
+}
+</style>
+</head>
+<body>
+<header>
+  <h1>🏥 Rekam, Transkrip &amp; Notulen Rapat — Format Akreditasi RS</h1>
+  <div class="acts">
+  <button class="w" id="installBtn">📲 Pasang Aplikasi</button>
+  <button onclick="newMeeting()">Rapat Baru</button>
+  <button onclick="save()">Simpan</button>
+  <button onclick="exportTxt()">Unduh .txt</button>
+  <button class="w" onclick="doPrint('undangan')">🖨️ Undangan</button>
+  <button class="w" onclick="doPrint('hadir')">🖨️ Daftar Hadir</button>
+  <button class="w" onclick="doPrint('notulen')">🖨️ Notulen</button>
+  </div>
+</header>
+
+<main>
+  <!-- 1. Identitas RS -->
+  <section class="card">
+    <h2>1. Identitas Rumah Sakit (Kop Surat)</h2>
+    <label>Nama Rumah Sakit</label><input id="rs" placeholder="RSU Contoh Sehat">
+    <label>Alamat, Telp, Email</label><input id="rsAddr" placeholder="Jl. Merdeka No. 1, Kota — Telp (021) 123456 — rs@contoh.id">
+    <label>Logo RS (opsional)</label><input type="file" accept="image/*" id="logoIn">
+    <img id="logoPrev" alt="logo">
+    <div class="row">
+      <div><label>Nama Direktur</label><input id="dir"></div>
+      <div><label>NIP / NIK Direktur</label><input id="dirNip"></div>
+    </div>
+    <p class="note">Identitas RS diingat otomatis untuk rapat berikutnya.</p>
+  </section>
+
+  <!-- 2. Informasi Rapat -->
+  <section class="card">
+    <h2>2. Informasi Rapat</h2>
+    <div class="row">
+      <div><label>Nomor Notulen / Dokumen</label><input id="no" placeholder="001/NOT/PMKP/XI/2026"></div>
+      <div><label>Nomor Undangan</label><input id="noUnd" placeholder="001/UND/PMKP/XI/2026"></div>
+    </div>
+    <div class="row">
+      <div><label>Komite / Pokja / Unit Penyelenggara</label>
+        <input id="unit" list="unitList" placeholder="pilih atau ketik">
+        <datalist id="unitList">
+          <option>Direksi / Pimpinan RS</option><option>Pokja TKRS (Tata Kelola RS)</option><option>Pokja KPS (Kompetensi &amp; Kewenangan Staf)</option>
+          <option>Pokja PMKP (Peningkatan Mutu &amp; Keselamatan Pasien)</option><option>Komite PMKP</option><option>Pokja PPI / Komite PPI</option>
+          <option>Pokja MFK (Manajemen Fasilitas &amp; Keamanan)</option><option>Pokja SKP (Sasaran Keselamatan Pasien)</option><option>Pokja AKP (Akses &amp; Kontinuitas Pelayanan)</option>
+          <option>Pokja HPK (Hak Pasien &amp; Keluarga)</option><option>Pokja PP (Pengkajian Pasien)</option><option>Pokja PAP (Pelayanan &amp; Asuhan Pasien)</option>
+          <option>Pokja PAB (Pelayanan Anestesi &amp; Bedah)</option><option>Pokja PKPO (Pelayanan Kefarmasian &amp; Penggunaan Obat)</option><option>Pokja KE (Komunikasi &amp; Edukasi)</option>
+          <option>Pokja MRMIK (Manajemen Rekam Medis &amp; Informasi Kesehatan)</option><option>Pokja PPK (Pendidikan dalam Pelayanan Kesehatan)</option><option>Pokja Prognas</option>
+          <option>Komite Medik</option><option>Komite Keperawatan</option><option>Komite Tenaga Kesehatan Lain</option><option>Komite Etik &amp; Hukum</option><option>Komite K3RS</option><option>Tim PROGNAS / PONEK / HIV / TB</option>
+        </datalist></div>
+      <div><label>Jenis Rapat</label>
+        <select id="jenis"><option>Rapat Rutin</option><option>Rapat Koordinasi</option><option>Rapat Insidentil</option><option>Rapat Evaluasi / Analisis Data</option><option>Rapat Pleno</option><option>Rapat Tinjauan Manajemen</option></select></div>
+    </div>
+    <label>Perihal / Judul Rapat</label><input id="title" placeholder="mis. Evaluasi Capaian Indikator Mutu Triwulan III">
+    <label>Standar / Elemen Penilaian (EP) terkait (opsional)</label><input id="std" placeholder="mis. PMKP 1 EP 2; TKRS 5 EP 1">
+    <div class="row3">
+      <div><label>Tanggal</label><input id="date" type="date"></div>
+      <div><label>Waktu</label><input id="time" placeholder="09.00 – 11.00 WIB"></div>
+      <div><label>Tempat</label><input id="place" placeholder="Ruang Rapat Lt. 2"></div>
+    </div>
+    <div class="row">
+      <div><label>Pimpinan Rapat</label><input id="leader"></div>
+      <div><label>Jabatan Pimpinan Rapat</label><input id="leaderJob" placeholder="Ketua Komite PMKP"></div>
+    </div>
+    <div class="row">
+      <div><label>Notulis</label><input id="writer"></div>
+      <div><label>Jabatan Notulis</label><input id="writerJob" placeholder="Sekretaris Komite PMKP"></div>
+    </div>
+    <label>Peserta — satu per baris, format: <b>Nama | Jabatan / Unit</b></label>
+    <textarea id="people" rows="5" placeholder="dr. Andi, Sp.PD | Ketua Komite Medik&#10;Ns. Rina, S.Kep | Kepala Ruang Melati"></textarea>
+    <label>Agenda Rapat</label><textarea id="agenda" rows="3" placeholder="1. Evaluasi tindak lanjut rapat sebelumnya&#10;2. ..."></textarea>
+  </section>
+
+  <!-- 3. Rekaman -->
+  <section class="card" id="recCard">
+    <h2>3. Rekaman &amp; Transkrip Langsung</h2>
+    <div class="warn" id="warn"></div>
+    <div class="bar ctl">
+      <span class="dot" id="dot"></span>
+      <span class="timer" id="timer">00:00:00</span>
+      <button class="red" id="bStart" onclick="start()">● Mulai Rekam</button>
+      <button id="bPause" onclick="pause()" disabled>❚❚ Jeda</button>
+      <button class="green" id="bStop" onclick="stop()" disabled>■ Selesai</button>
+    </div>
+    <div id="meter"><div></div></div>
+    <div class="row" style="margin-top:8px">
+      <div><label>Bahasa transkrip</label>
+        <select id="lang"><option value="id-ID">Bahasa Indonesia</option><option value="en-US">English</option><option value="jv-ID">Basa Jawa</option><option value="su-ID">Basa Sunda</option></select></div>
+      <div><label>Pembicara saat ini (label otomatis)</label>
+        <input id="speaker" list="spkList" placeholder="mis. Ketua PMKP"><datalist id="spkList"></datalist></div>
+    </div>
+    <label><input type="checkbox" id="recAudio" checked style="width:auto"> Simpan juga rekaman audio <span id="recAudioHint"></span></label>
+    <label>Transkrip (klik teks untuk mengedit)</label>
+    <div id="transcript"><div id="lines"></div><div id="interim"></div></div>
+    <div class="bar" style="margin-top:8px">
+      <button onclick="addLine()">+ Baris manual</button>
+      <button onclick="clearTr()">Hapus transkrip</button>
+    </div>
+    <audio id="player" controls hidden></audio>
+    <div class="bar" style="margin-top:6px"><a id="dl" hidden><button>⬇ Unduh Rekaman Audio</button></a></div>
+    <p class="note">Transkrip otomatis memakai pengenalan suara Google — gunakan <b>Google Chrome</b> (HP Android / komputer) atau <b>Microsoft Edge</b>, dan perlu internet. Selama merekam, layar HP dijaga tetap menyala; jangan pindah ke aplikasi lain. Simpan file audio sebagai arsip bukti rapat.</p>
+  </section>
+
+  <!-- 4. Isi -->
+  <section class="card">
+    <h2>4. Evaluasi Tindak Lanjut Rapat Sebelumnya</h2>
+    <table class="ed"><thead><tr><th style="width:28px">No</th><th>Rencana Tindak Lanjut</th><th style="width:22%">PJ</th><th style="width:20%">Status</th><th style="width:24px"></th></tr></thead><tbody id="prev"></tbody></table>
+    <button style="margin-top:6px" onclick="addRow('prev')">+ Tambah</button>
+
+    <h2 style="margin-top:16px">5. Pembahasan</h2>
+    <textarea id="summary" rows="7" placeholder="Pokok-pokok pembahasan, masalah, analisis..."></textarea>
+    <button style="margin-top:6px" onclick="fillSummary()">Isi dari transkrip</button>
+    <label>Kesimpulan / Keputusan / Rekomendasi</label>
+    <textarea id="decisions" rows="4" placeholder="1. ...&#10;2. ..."></textarea>
+  </section>
+
+  <section class="card full">
+    <h2>6. Rencana Tindak Lanjut (RTL)</h2>
+    <table class="ed"><thead><tr><th style="width:28px">No</th><th>Masalah / Kegiatan</th><th>Rencana Tindak Lanjut</th><th style="width:16%">Penanggung Jawab</th><th style="width:13%">Target Waktu</th><th style="width:12%">Status</th><th style="width:24px"></th></tr></thead><tbody id="acts"></tbody></table>
+    <button style="margin-top:6px" onclick="addRow('acts')">+ Tambah RTL</button>
+  </section>
+
+  <section class="card">
+    <h2>7. Dokumentasi Foto</h2>
+    <input type="file" accept="image/*" multiple id="fotoIn">
+    <div class="thumbs" id="thumbs"></div>
+    <p class="note">Foto dikompres otomatis dan dicetak sebagai lampiran notulen.</p>
+    <h2 style="margin-top:14px">Pengaturan Cetak</h2>
+    <label><input type="checkbox" id="incTr" checked style="width:auto"> Lampirkan transkrip lengkap</label>
+    <label><input type="checkbox" id="incDir" checked style="width:auto"> Kolom "Mengetahui, Direktur"</label>
+    <label><input type="checkbox" id="incFoto" checked style="width:auto"> Lampirkan dokumentasi foto</label>
+  </section>
+
+  <section class="card">
+    <h2>Rapat Tersimpan</h2>
+    <ul id="list"></ul>
+  </section>
+</main>
+
+<div id="print"></div>
+
+<script>
+const $ = id => document.getElementById(id);
+const FIELDS = ['no','noUnd','unit','jenis','title','std','date','time','place','leader','leaderJob','writer','writerJob','people','agenda','summary','decisions'];
+const RSF = ['rs','rsAddr','dir','dirNip'];
+const STATUS = ['Belum','Proses','Selesai'];
+let cur = blank(), rec=null, chunks=[], stream=null, sr=null, srOn=false;
+let t0=0, elapsed=0, tick=null, actx=null, raf=null, logo='';
+
+function blank(){ return {id:Date.now(), lines:[], acts:[], prev:[], fotos:[], jenis:'Rapat Rutin', date:new Date().toISOString().slice(0,10), incTr:true, incDir:true, incFoto:true}; }
+const fmt = ms => { const s=Math.floor(ms/1000); return [s/3600,s%3600/60,s%60].map(v=>String(Math.floor(v)).padStart(2,'0')).join(':'); };
+const esc = s => String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const now = () => elapsed + (t0 ? Date.now()-t0 : 0);
+const tgl = d => d ? new Date(d+'T00:00').toLocaleDateString('id-ID',{weekday:'long',day:'numeric',month:'long',year:'numeric'}) : '-';
+const tglS = d => d ? new Date(d+'T00:00').toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'}) : '-';
+const ls = { get(k,d){ try{ return JSON.parse(localStorage.getItem(k)) ?? d; }catch(e){ return d; } },
+             set(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); return true; }catch(e){ alert('Penyimpanan penuh / gagal: '+e.message+'\nCoba hapus rapat lama atau kurangi foto.'); return false; } } };
+
+/* ---------- Identitas RS ---------- */
+function loadRS(){ const r=ls.get('rsInfo',{}); RSF.forEach(f=>$(f).value=r[f]||''); logo=r.logo||''; showLogo(); }
+function saveRS(){ const r={logo}; RSF.forEach(f=>r[f]=$(f).value); ls.set('rsInfo',r); }
+RSF.forEach(f=>$(f).addEventListener('change',saveRS));
+function showLogo(){ $('logoPrev').src=logo; $('logoPrev').style.display=logo?'block':'none'; }
+function shrink(file,max,cb){
+  const fr=new FileReader(); fr.onload=()=>{ const im=new Image(); im.onload=()=>{
+    const k=Math.min(1,max/Math.max(im.width,im.height)); const c=document.createElement('canvas');
+    c.width=im.width*k; c.height=im.height*k; const g=c.getContext('2d'); g.fillStyle='#fff'; g.fillRect(0,0,c.width,c.height); g.drawImage(im,0,0,c.width,c.height);
+    cb(c.toDataURL('image/jpeg',.75)); }; im.src=fr.result; }; fr.readAsDataURL(file);
+}
+$('logoIn').onchange=e=>{ const f=e.target.files[0]; if(f) shrink(f,300,d=>{logo=d;showLogo();saveRS();}); };
+$('fotoIn').onchange=e=>{ [...e.target.files].forEach(f=>shrink(f,1000,d=>{cur.fotos.push(d);renderFotos();})); e.target.value=''; };
+function renderFotos(){ $('thumbs').innerHTML=cur.fotos.map((f,i)=>`<div><img src="${f}"><button onclick="cur.fotos.splice(${i},1);renderFotos()">✕</button></div>`).join(''); }
+
+/* ---------- Data rapat ---------- */
+function load(m){
+  cur=Object.assign(blank(),m); FIELDS.forEach(f=>$(f).value=cur[f]||'');
+  ['incTr','incDir','incFoto'].forEach(f=>$(f).checked=cur[f]!==false);
+  renderLines(); renderRows('acts'); renderRows('prev'); renderFotos();
+}
+function collect(){ FIELDS.forEach(f=>cur[f]=$(f).value); ['incTr','incDir','incFoto'].forEach(f=>cur[f]=$(f).checked); }
+function save(silent){
+  collect(); const all=ls.get('notulenRS',[]).filter(x=>x.id!==cur.id); all.unshift(cur);
+  if(ls.set('notulenRS',all)){ renderList(); if(!silent) alert('Rapat tersimpan.'); }
+}
+function renderList(){
+  const all=ls.get('notulenRS',[]);
+  $('list').innerHTML=all.length?all.map(m=>`<li><span><b>${esc(m.title||'(tanpa judul)')}</b><br><small>${esc(m.unit||'')} — ${tglS(m.date)}</small></span><span><button onclick="openM(${m.id})">Buka</button> <button onclick="carry(${m.id})" title="Bawa RTL ke rapat baru">↪ Lanjut</button> <button onclick="delM(${m.id})">✕</button></span></li>`).join(''):'<li class="note">Belum ada rapat tersimpan.</li>';
+}
+function openM(id){ const m=ls.get('notulenRS',[]).find(x=>x.id===id); if(m) load(m); }
+function delM(id){ if(confirm('Hapus rapat ini dari daftar?')){ ls.set('notulenRS',ls.get('notulenRS',[]).filter(x=>x.id!==id)); renderList(); } }
+function newMeeting(){ if(confirm('Mulai rapat baru? Data yang belum disimpan akan hilang.')) load(blank()); }
+// Rapat lanjutan: RTL rapat lama otomatis jadi "Evaluasi Tindak Lanjut Rapat Sebelumnya"
+function carry(id){
+  const m=ls.get('notulenRS',[]).find(x=>x.id===id); if(!m||!confirm('Buat rapat baru dan bawa RTL dari rapat ini untuk dievaluasi?')) return;
+  const n=blank(); Object.assign(n,{unit:m.unit,jenis:m.jenis,place:m.place,leader:m.leader,leaderJob:m.leaderJob,writer:m.writer,writerJob:m.writerJob,people:m.people,std:m.std,
+    agenda:'1. Evaluasi tindak lanjut rapat sebelumnya\n2. ',
+    prev:(m.acts||[]).map(a=>({task:[a.issue,a.task].filter(Boolean).join(' — '),pic:a.pic,status:a.status||'Belum'}))});
+  load(n);
+}
+setInterval(()=>save(true),30000);
+
+/* ---------- Tabel RTL ---------- */
+function renderRows(k){
+  const sel=(i,v)=>`<select oninput="cur.${k}[${i}].status=this.value">${STATUS.map(s=>`<option ${s===v?'selected':''}>${s}</option>`).join('')}</select>`;
+  const inp=(i,f,t='text')=>`<input type="${t}" value="${esc(cur[k][i][f])}" oninput="cur.${k}[${i}].${f}=this.value">`;
+  $(k).innerHTML=cur[k].map((a,i)=>`<tr><td style="text-align:center">${i+1}</td>`+
+    (k==='acts'?`<td>${inp(i,'issue')}</td><td>${inp(i,'task')}</td><td>${inp(i,'pic')}</td><td>${inp(i,'due','date')}</td>`:`<td>${inp(i,'task')}</td><td>${inp(i,'pic')}</td>`)+
+    `<td>${sel(i,a.status)}</td><td><button class="del" onclick="cur.${k}.splice(${i},1);renderRows('${k}')">✕</button></td></tr>`).join('');
+}
+function addRow(k){ cur[k].push({issue:'',task:'',pic:'',due:'',status:'Belum'}); renderRows(k); }
+
+/* ---------- Transkrip ---------- */
+function renderLines(){
+  $('lines').innerHTML=cur.lines.map((l,i)=>`<div class="ln"><span class="t">${fmt(l.t).slice(3)}</span><span class="s" contenteditable onblur="cur.lines[${i}].s=this.innerText.trim()">${esc(l.s)}</span><span class="x" contenteditable onblur="cur.lines[${i}].x=this.innerText.trim()">${esc(l.x)}</span><button class="del" onclick="cur.lines.splice(${i},1);renderLines()">✕</button></div>`).join('');
+  const spk=[...new Set([...cur.lines.map(l=>l.s),...($('people').value||'').split('\n').map(p=>p.split('|')[0].trim())].filter(Boolean))];
+  $('spkList').innerHTML=spk.map(s=>`<option value="${esc(s)}">`).join('');
+  const b=$('transcript'); b.scrollTop=b.scrollHeight;
+}
+$('people').addEventListener('change',renderLines);
+function pushLine(text){
+  text=text.trim(); if(!text) return;
+  // Chrome Android kadang mengirim kalimat yang sama berulang/menumpuk: gabungkan
+  const last=cur.lines[cur.lines.length-1];
+  if(last && now()-last.t<15000){
+    const a=last.x.toLowerCase(), b=text.toLowerCase();
+    if(a===b || a.endsWith(b)) return;
+    if(b.startsWith(a)){ last.x=text.charAt(0).toUpperCase()+text.slice(1); renderLines(); return; }
+  }
+  cur.lines.push({t:now(),s:$('speaker').value.trim(),x:text.charAt(0).toUpperCase()+text.slice(1)}); renderLines(); }
+function addLine(){ cur.lines.push({t:now(),s:$('speaker').value.trim(),x:'(ketik di sini)'}); renderLines(); }
+function clearTr(){ if(confirm('Hapus seluruh transkrip?')){ cur.lines=[]; renderLines(); } }
+function fillSummary(){
+  if(!cur.lines.length) return alert('Transkrip masih kosong.');
+  if($('summary').value && !confirm('Timpa pembahasan yang ada?')) return;
+  $('summary').value=cur.lines.map(l=>'- '+(l.s?l.s+': ':'')+l.x).join('\n');
+}
+
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+const IS_MOBILE=/Android|iPhone|iPad|Mobi/i.test(navigator.userAgent);
+if(!SR){ const w=$('warn'); w.style.display='block'; w.textContent='Browser ini tidak mendukung transkrip otomatis. Rekaman audio tetap berjalan; transkrip bisa diketik manual. Untuk transkrip otomatis, buka di Chrome atau Edge.'; }
+function startSR(){
+  if(!SR) return;
+  sr=new SR(); sr.lang=$('lang').value; sr.continuous=!IS_MOBILE; sr.interimResults=true; // di HP: per kalimat lalu otomatis lanjut
+  sr.onresult=e=>{ let interim=''; for(let i=e.resultIndex;i<e.results.length;i++){ const r=e.results[i]; if(r.isFinal) pushLine(r[0].transcript); else interim+=r[0].transcript; } $('interim').textContent=interim; };
+  sr.onerror=e=>{
+    if(e.error==='not-allowed'){ srOn=false; alert('Izin mikrofon untuk transkrip ditolak.'); }
+    else if(e.error==='audio-capture'){ srFail++; if(srFail>=3 && rec){ srOn=false; showWarn('Transkrip otomatis tidak bisa berjalan bersamaan dengan rekaman audio di HP ini. Hentikan rekaman, matikan "Simpan juga rekaman audio", lalu mulai lagi untuk mendapatkan transkrip.'); } }
+    else if(e.error==='network') showWarn('Transkrip butuh koneksi internet.');
+  };
+  sr.onend=()=>{ $('interim').textContent=''; if(srOn) try{ sr.start(); }catch(e){} };
+  srOn=true; try{ sr.start(); }catch(e){}
+}
+function stopSR(){ srOn=false; if(sr) try{ sr.stop(); }catch(e){} }
+$('lang').onchange=()=>{ if(srOn){ stopSR(); setTimeout(startSR,300); } };
+
+/* ---------- Rekam audio ---------- */
+let running=false, paused=false, srFail=0, wake=null;
+function showWarn(t){ const w=$('warn'); w.style.display='block'; w.textContent=t; }
+async function keepAwake(on){
+  try{ if(on && 'wakeLock' in navigator) wake=await navigator.wakeLock.request('screen'); else if(wake){ wake.release(); wake=null; } }catch(e){}
+}
+document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible' && running && !paused) keepAwake(true); });
+
+async function start(){
+  srFail=0; rec=null; stream=null;
+  if($('recAudio').checked){
+    try{ stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true}}); }
+    catch(e){ alert('Tidak bisa mengakses mikrofon: '+e.message); return; }
+    chunks=[]; rec=new MediaRecorder(stream);
+    rec.ondataavailable=e=>e.data.size&&chunks.push(e.data); rec.onstop=finishAudio; rec.start(1000);
+    meter();
+  } else if(!SR){ alert('Rekaman audio dimatikan dan browser ini tidak mendukung transkrip.'); return; }
+  running=true; paused=false; elapsed=0;
+  t0=Date.now(); tick=setInterval(()=>$('timer').textContent=fmt(now()),500);
+  startSR(); keepAwake(true); setUI('rec');
+}
+function pause(){
+  if(!running) return;
+  if(!paused){ if(rec) rec.pause(); stopSR(); elapsed+=Date.now()-t0; t0=0; paused=true; setUI('pause'); }
+  else { if(rec) rec.resume(); startSR(); t0=Date.now(); paused=false; setUI('rec'); }
+}
+function stop(){
+  if(!running) return; if(t0){ elapsed+=Date.now()-t0; t0=0; }
+  running=false; stopSR(); keepAwake(false);
+  if(rec){ rec.stop(); stream.getTracks().forEach(t=>t.stop()); }
+  clearInterval(tick); cancelAnimationFrame(raf); if(actx) actx.close(); actx=null; $('meter').firstChild.style.width='0';
+  setUI('idle'); save(true);
+}
+function finishAudio(){
+  const blob=new Blob(chunks,{type:rec.mimeType||'audio/webm'}), url=URL.createObjectURL(blob);
+  $('player').src=url; $('player').hidden=false;
+  $('dl').href=url; $('dl').download=`Rekaman_${($('title').value||'Rapat').replace(/[^\w]+/g,'_')}_${$('date').value}.${(rec.mimeType||'').includes('ogg')?'ogg':'webm'}`; $('dl').hidden=false;
+}
+function setUI(s){
+  $('dot').className='dot'+(s==='rec'?' on':''); $('bStart').disabled=s!=='idle'; $('bStop').disabled=s==='idle'; $('bPause').disabled=s==='idle';
+  $('bPause').textContent=s==='pause'?'▶ Lanjut':'❚❚ Jeda';
+}
+function meter(){
+  actx=new AudioContext(); const an=actx.createAnalyser(); an.fftSize=512; actx.createMediaStreamSource(stream).connect(an);
+  const d=new Uint8Array(an.fftSize);
+  (function loop(){ an.getByteTimeDomainData(d); let m=0; for(const v of d) m=Math.max(m,Math.abs(v-128)); $('meter').firstChild.style.width=Math.min(100,m/128*250)+'%'; raf=requestAnimationFrame(loop); })();
+}
+
+/* ---------- Ekspor ---------- */
+const peserta = () => (cur.people||'').split('\n').map(s=>s.trim()).filter(Boolean).map(s=>{ const [n,j]=s.split('|'); return {n:(n||'').trim(), j:(j||'').trim()}; });
+function exportTxt(){
+  collect(); const r=ls.get('rsInfo',{});
+  const t=`${r.rs||''}\nNOTULEN RAPAT  No. ${cur.no||'-'}\n\nKomite/Pokja : ${cur.unit||'-'}\nJenis Rapat  : ${cur.jenis}\nPerihal      : ${cur.title||'-'}\nStandar/EP   : ${cur.std||'-'}\nHari/Tanggal : ${tgl(cur.date)}\nWaktu        : ${cur.time||'-'}\nTempat       : ${cur.place||'-'}\nPimpinan     : ${cur.leader||'-'} (${cur.leaderJob||''})\nNotulis      : ${cur.writer||'-'} (${cur.writerJob||''})\n\nPESERTA\n${peserta().map((p,i)=>`${i+1}. ${p.n} — ${p.j}`).join('\n')||'-'}\n\nAGENDA\n${cur.agenda||'-'}\n\nEVALUASI TINDAK LANJUT RAPAT SEBELUMNYA\n${cur.prev.map((a,i)=>`${i+1}. ${a.task} | PJ: ${a.pic} | ${a.status}`).join('\n')||'-'}\n\nPEMBAHASAN\n${cur.summary||'-'}\n\nKESIMPULAN / REKOMENDASI\n${cur.decisions||'-'}\n\nRENCANA TINDAK LANJUT\n${cur.acts.map((a,i)=>`${i+1}. ${a.issue} → ${a.task} | PJ: ${a.pic} | Target: ${tglS(a.due)} | ${a.status}`).join('\n')||'-'}\n\nTRANSKRIP\n${cur.lines.map(l=>`[${fmt(l.t)}] ${l.s?l.s+': ':''}${l.x}`).join('\n')}`;
+  const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([t],{type:'text/plain'})); a.download=`Notulen_${(cur.title||'Rapat').replace(/[^\w]+/g,'_')}_${cur.date}.txt`; a.click();
+}
+
+/* ---------- Cetak ---------- */
+function kop(r){ return `<div class="kop">${r.logo?`<img src="${r.logo}">`:''}<div class="k"><b>${esc(r.rs||'NAMA RUMAH SAKIT')}</b><span>${esc(r.rsAddr||'')}</span></div>${r.logo?'<div style="width:70px"></div>':''}</div>`; }
+const ttdBox=(role,name,job,nip)=>`<div>${role}<br>${esc(job||'')}<div class="sp"></div><b><u>${esc(name||'(..............................)')}</u></b>${nip?`<br>NIP/NIK. ${esc(nip)}`:''}</div>`;
+const pre=s=>`<div class="pre">${esc(s||'-')}</div>`;
+const foot=jenis=>`<div class="foot">${esc(jenis)} · ${esc(cur.unit||'')} · ${esc(cur.no||'')}</div>`;
+
+function pUndangan(r){
+  return `${kop(r)}
+  <table class="info" style="margin-bottom:14px"><tr><td style="width:90px">Nomor</td><td>:</td><td>${esc(cur.noUnd||'-')}</td></tr>
+  <tr><td>Lampiran</td><td>:</td><td>-</td></tr><tr><td>Perihal</td><td>:</td><td><b>Undangan ${esc(cur.jenis)}</b></td></tr></table>
+  <p>Kepada Yth.<br>Bapak/Ibu Peserta Rapat (daftar terlampir)<br>di Tempat</p>
+  <p>Dengan hormat,<br>Sehubungan dengan kegiatan ${esc(cur.unit||'rumah sakit')}, bersama ini kami mengundang Bapak/Ibu untuk menghadiri ${esc(cur.jenis.toLowerCase())} yang akan dilaksanakan pada:</p>
+  <table class="info" style="margin-left:30px"><tr><td style="width:110px">Hari / Tanggal</td><td>:</td><td>${tgl(cur.date)}</td></tr>
+  <tr><td>Waktu</td><td>:</td><td>${esc(cur.time||'-')}</td></tr><tr><td>Tempat</td><td>:</td><td>${esc(cur.place||'-')}</td></tr>
+  <tr><td>Acara</td><td>:</td><td>${esc(cur.title||'-')}</td></tr></table>
+  ${cur.agenda?`<p>Dengan agenda:</p><div class="pre" style="margin-left:30px">${esc(cur.agenda)}</div>`:''}
+  <p>Mengingat pentingnya acara tersebut, kami mengharapkan kehadiran Bapak/Ibu tepat waktu. Atas perhatian dan kehadirannya kami ucapkan terima kasih.</p>
+  <div class="ttd"><div></div>${ttdBox(tglS(cur.date)+'<br>'+(cur.leaderJob?'':'Pimpinan Rapat,'),cur.leader,cur.leaderJob?cur.leaderJob+',':'','')}</div>
+  ${peserta().length?`<div class="pb"></div><h3>Lampiran: Daftar Undangan</h3><table class="grid"><tr><th style="width:36px">No</th><th>Nama</th><th>Jabatan / Unit</th></tr>${peserta().map((p,i)=>`<tr><td style="text-align:center">${i+1}</td><td>${esc(p.n)}</td><td>${esc(p.j)}</td></tr>`).join('')}</table>`:''}`;
+}
+function pHadir(r,first){
+  const ppl=peserta(), rows=Math.max(ppl.length+3,10);
+  return `${first?'':'<div class="pb"></div>'}${kop(r)}<h1 class="jd">Daftar Hadir</h1><div class="no">${esc(cur.jenis)} ${esc(cur.unit||'')}</div>
+  <table class="info"><tr><td style="width:120px">Perihal</td><td>:</td><td>${esc(cur.title||'-')}</td></tr><tr><td>Hari / Tanggal</td><td>:</td><td>${tgl(cur.date)}</td></tr>
+  <tr><td>Waktu</td><td>:</td><td>${esc(cur.time||'-')}</td></tr><tr><td>Tempat</td><td>:</td><td>${esc(cur.place||'-')}</td></tr></table><br>
+  <table class="grid"><tr><th style="width:36px">No</th><th>Nama</th><th>Jabatan / Unit</th><th style="width:150px" colspan="2">Tanda Tangan</th></tr>
+  ${Array.from({length:rows},(_,i)=>{ const p=ppl[i]||{n:'',j:''}; return `<tr><td style="text-align:center;height:30px">${i+1}</td><td>${esc(p.n)}</td><td>${esc(p.j)}</td><td style="width:75px">${i%2===0?i+1+'.':''}</td><td style="width:75px">${i%2===1?i+1+'.':''}</td></tr>`; }).join('')}</table>
+  <div class="ttd"><div></div>${ttdBox('Pimpinan Rapat,',cur.leader,cur.leaderJob,'')}</div>${foot('Daftar Hadir')}`;
+}
+function pNotulen(r){
+  const ppl=peserta(), st=s=>s==='Selesai'?'✔ Selesai':esc(s||'Belum');
+  let h=`${kop(r)}<h1 class="jd">Notulen Rapat</h1><div class="no">Nomor: ${esc(cur.no||'..........................')}</div>
+  <table class="info">
+    <tr><td style="width:150px">Komite / Pokja / Unit</td><td>:</td><td>${esc(cur.unit||'-')}</td></tr>
+    <tr><td>Jenis Rapat</td><td>:</td><td>${esc(cur.jenis)}</td></tr>
+    <tr><td>Perihal</td><td>:</td><td>${esc(cur.title||'-')}</td></tr>
+    ${cur.std?`<tr><td>Standar / EP Terkait</td><td>:</td><td>${esc(cur.std)}</td></tr>`:''}
+    <tr><td>Hari / Tanggal</td><td>:</td><td>${tgl(cur.date)}</td></tr>
+    <tr><td>Waktu</td><td>:</td><td>${esc(cur.time||'-')}</td></tr>
+    <tr><td>Tempat</td><td>:</td><td>${esc(cur.place||'-')}</td></tr>
+    <tr><td>Pimpinan Rapat</td><td>:</td><td>${esc(cur.leader||'-')}${cur.leaderJob?' ('+esc(cur.leaderJob)+')':''}</td></tr>
+    <tr><td>Notulis</td><td>:</td><td>${esc(cur.writer||'-')}${cur.writerJob?' ('+esc(cur.writerJob)+')':''}</td></tr>
+    <tr><td>Peserta</td><td>:</td><td>${ppl.length} orang (daftar hadir terlampir)</td></tr>
+  </table>
+  <h3>A. Agenda Rapat</h3>${pre(cur.agenda)}
+  <h3>B. Evaluasi Tindak Lanjut Rapat Sebelumnya</h3>
+  ${cur.prev.length?`<table class="grid"><tr><th style="width:36px">No</th><th>Rencana Tindak Lanjut</th><th style="width:25%">Penanggung Jawab</th><th style="width:16%">Status</th></tr>${cur.prev.map((a,i)=>`<tr><td style="text-align:center">${i+1}</td><td>${esc(a.task)}</td><td>${esc(a.pic)}</td><td>${st(a.status)}</td></tr>`).join('')}</table>`:'<div>-</div>'}
+  <h3>C. Pembahasan</h3>${pre(cur.summary)}
+  <h3>D. Kesimpulan / Keputusan / Rekomendasi</h3>${pre(cur.decisions)}
+  <h3>E. Rencana Tindak Lanjut (RTL)</h3>
+  ${cur.acts.length?`<table class="grid"><tr><th style="width:32px">No</th><th>Masalah / Kegiatan</th><th>Rencana Tindak Lanjut</th><th style="width:18%">Penanggung Jawab</th><th style="width:14%">Target Waktu</th><th style="width:11%">Status</th></tr>${cur.acts.map((a,i)=>`<tr><td style="text-align:center">${i+1}</td><td>${esc(a.issue)}</td><td>${esc(a.task)}</td><td>${esc(a.pic)}</td><td>${a.due?tglS(a.due):'-'}</td><td>${st(a.status)}</td></tr>`).join('')}</table>`:'<div>-</div>'}
+  <p style="margin-top:14px">Demikian notulen rapat ini dibuat untuk dapat dipergunakan sebagaimana mestinya.</p>
+  <div class="ttd">${ttdBox('Notulis,',cur.writer,cur.writerJob,'')}${ttdBox('Pimpinan Rapat,',cur.leader,cur.leaderJob,'')}</div>
+  ${cur.incDir?`<div class="ttdc">Mengetahui,<br>Direktur ${esc(r.rs||'')}<div style="height:65px"></div><b><u>${esc(r.dir||'(..............................)')}</u></b>${r.dirNip?`<br>NIP/NIK. ${esc(r.dirNip)}`:''}</div>`:''}
+  ${foot('Notulen Rapat')}`;
+  h+=pHadir(r,false);
+  if(cur.incFoto&&cur.fotos.length) h+=`<div class="pb"></div>${kop(r)}<h1 class="jd">Dokumentasi Kegiatan</h1><div class="no">${esc(cur.title||'')} — ${tgl(cur.date)}</div><div class="foto">${cur.fotos.map(f=>`<img src="${f}">`).join('')}</div>`;
+  if(cur.incTr&&cur.lines.length) h+=`<div class="pb"></div><h3>Lampiran: Transkrip Rapat</h3><div class="tr">${cur.lines.map(l=>`<p>[${fmt(l.t)}] ${l.s?`<b>${esc(l.s)}:</b> `:''}${esc(l.x)}</p>`).join('')}</div>`;
+  return h;
+}
+function doPrint(kind){
+  collect(); saveRS(); const r=ls.get('rsInfo',{});
+  $('print').innerHTML = kind==='undangan'?pUndangan(r) : kind==='hadir'?pHadir(r,true) : pNotulen(r);
+  setTimeout(()=>window.print(),150);
+}
+
+/* ---------- Pasang sebagai aplikasi (PWA) ---------- */
+if('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('sw.js').catch(()=>{});
+let installEvt=null;
+window.addEventListener('beforeinstallprompt',e=>{ e.preventDefault(); installEvt=e; $('installBtn').style.display='inline-block'; });
+$('installBtn').onclick=async()=>{ if(!installEvt) return; installEvt.prompt(); await installEvt.userChoice; installEvt=null; $('installBtn').style.display='none'; };
+window.addEventListener('appinstalled',()=>$('installBtn').style.display='none');
+try{ const st=localStorage.getItem('recAudio'); if(st!==null) $('recAudio').checked=st==='1'; }catch(e){}
+$('recAudio').onchange=()=>{ try{ localStorage.setItem('recAudio',$('recAudio').checked?'1':'0'); }catch(e){} };
+if(navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(()=>{}); // cegah data dihapus otomatis oleh Android
+
+loadRS(); load(cur); renderList();
+</script>
+</body>
+</html>
