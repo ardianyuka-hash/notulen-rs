@@ -199,6 +199,7 @@ header .acts{display:contents}
       <button class="green" id="bStop" onclick="stop()" disabled>■ Selesai</button>
     </div>
     <div id="meter"><div></div></div>
+    <div id="srStatus" class="note" style="font-weight:600">Status transkrip: siap</div>
     <div class="row" style="margin-top:8px">
       <div><label>Bahasa transkrip</label>
         <select id="lang"><option value="id-ID">Bahasa Indonesia</option><option value="en-US">English</option><option value="jv-ID">Basa Jawa</option><option value="su-ID">Basa Sunda</option></select></div>
@@ -354,19 +355,45 @@ function fillSummary(){
 const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
 const IS_MOBILE=/Android|iPhone|iPad|Mobi/i.test(navigator.userAgent);
 if(!SR){ const w=$('warn'); w.style.display='block'; w.textContent='Browser ini tidak mendukung transkrip otomatis. Rekaman audio tetap berjalan; transkrip bisa diketik manual. Untuk transkrip otomatis, buka di Chrome atau Edge.'; }
+function setSt(t){ $('srStatus').textContent='Status transkrip: '+t; }
+let gotResult=false, watchdog=null;
 function startSR(){
   if(!SR) return;
-  sr=new SR(); sr.lang=$('lang').value; sr.continuous=!IS_MOBILE; sr.interimResults=true; // di HP: per kalimat lalu otomatis lanjut
-  sr.onresult=e=>{ let interim=''; for(let i=e.resultIndex;i<e.results.length;i++){ const r=e.results[i]; if(r.isFinal) pushLine(r[0].transcript); else interim+=r[0].transcript; } $('interim').textContent=interim; };
-  sr.onerror=e=>{
-    if(e.error==='not-allowed'){ srOn=false; alert('Izin mikrofon untuk transkrip ditolak.'); }
-    else if(e.error==='audio-capture'){ srFail++; if(srFail>=3 && rec){ srOn=false; showWarn('Transkrip otomatis tidak bisa berjalan bersamaan dengan rekaman audio di HP ini. Hentikan rekaman, matikan "Simpan juga rekaman audio", lalu mulai lagi untuk mendapatkan transkrip.'); } }
-    else if(e.error==='network') showWarn('Transkrip butuh koneksi internet.');
+  const s=new SR(); sr=s; s.lang=$('lang').value; s.continuous=!IS_MOBILE; s.interimResults=true; // di HP: per kalimat lalu otomatis lanjut
+  s.onstart=()=>setSt('🟢 mendengarkan… silakan bicara');
+  s.onspeechstart=()=>setSt('🟢 suara terdeteksi…');
+  s.onresult=e=>{ gotResult=true; setSt('🟢 mendengarkan');
+    let interim=''; for(let i=e.resultIndex;i<e.results.length;i++){ const r=e.results[i]; if(r.isFinal) pushLine(r[0].transcript); else interim+=r[0].transcript; } $('interim').textContent=interim; };
+  s.onerror=e=>{
+    const er=e.error;
+    if(er==='no-speech'||er==='aborted') return; // diam sebentar: lanjut otomatis
+    if(er==='audio-capture' && rec){ dropAudio('Mikrofon dipakai perekam audio'); return; }
+    srOn=false;
+    const msg={
+      'not-allowed':'izin mikrofon ditolak. Buka pengaturan situs di Chrome (ikon gembok/⋮ → Info situs) lalu izinkan Mikrofon.',
+      'service-not-allowed':'layanan pengenal suara tidak tersedia. Pastikan aplikasi "Google" terpasang, aktif, dan sudah diperbarui di Play Store, lalu coba lagi.',
+      'audio-capture':'mikrofon tidak bisa dipakai. Tutup aplikasi lain yang memakai mikrofon (WhatsApp call, perekam suara), lalu coba lagi.',
+      'network':'butuh koneksi internet. Periksa data/Wi-Fi lalu coba lagi.',
+      'language-not-supported':'bahasa ini tidak didukung. Pilih Bahasa Indonesia.'
+    }[er] || ('error "'+er+'"');
+    setSt('🔴 '+msg); showWarn('Transkrip berhenti: '+msg);
   };
-  sr.onend=()=>{ $('interim').textContent=''; if(srOn) try{ sr.start(); }catch(e){} };
-  srOn=true; try{ sr.start(); }catch(e){}
+  s.onend=()=>{ $('interim').textContent=''; if(srOn && sr===s) setTimeout(()=>{ if(srOn && sr===s) try{ s.start(); }catch(e){ startSR(); } },250); };
+  srOn=true; try{ s.start(); }catch(e){ setSt('🔴 gagal memulai: '+e.message); }
+  // Di HP: kalau sambil merekam audio tidak ada hasil sama sekali, utamakan transkrip
+  clearTimeout(watchdog);
+  if(IS_MOBILE && rec) watchdog=setTimeout(()=>{ if(running && !paused && !gotResult && rec) dropAudio('Belum ada transkrip selama 12 detik'); },12000);
 }
-function stopSR(){ srOn=false; if(sr) try{ sr.stop(); }catch(e){} }
+function stopSR(){ srOn=false; clearTimeout(watchdog); if(sr) try{ sr.stop(); }catch(e){} if(!running) setSt('siap'); }
+// HP Android tidak bisa merekam audio dan transkrip bersamaan: hentikan rekaman audio, lanjutkan transkrip
+function dropAudio(why){
+  if(!rec) return;
+  try{ rec.stop(); stream.getTracks().forEach(t=>t.stop()); }catch(e){}
+  rec=null; cancelAnimationFrame(raf); if(actx) actx.close(); actx=null; $('meter').firstChild.style.width='0';
+  showWarn(why+' — di HP ini rekaman audio dan transkrip tidak bisa berjalan bersamaan. Rekaman audio dihentikan (bagian yang sudah terekam tetap bisa diunduh), transkrip dilanjutkan.');
+  $('recAudio').checked=false; try{ localStorage.setItem('recAudio','0'); }catch(e){}
+  stopSR(); setTimeout(()=>{ if(running && !paused) startSR(); },500);
+}
 $('lang').onchange=()=>{ if(srOn){ stopSR(); setTimeout(startSR,300); } };
 
 /* ---------- Rekam audio ---------- */
@@ -378,7 +405,7 @@ async function keepAwake(on){
 document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible' && running && !paused) keepAwake(true); });
 
 async function start(){
-  srFail=0; rec=null; stream=null;
+  srFail=0; rec=null; stream=null; gotResult=false; $('warn').style.display='none';
   if($('recAudio').checked){
     try{ stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true}}); }
     catch(e){ alert('Tidak bisa mengakses mikrofon: '+e.message); return; }
@@ -402,10 +429,11 @@ function stop(){
   clearInterval(tick); cancelAnimationFrame(raf); if(actx) actx.close(); actx=null; $('meter').firstChild.style.width='0';
   setUI('idle'); save(true);
 }
-function finishAudio(){
-  const blob=new Blob(chunks,{type:rec.mimeType||'audio/webm'}), url=URL.createObjectURL(blob);
+function finishAudio(e){
+  const mt=(e&&e.target&&e.target.mimeType)||'audio/webm';
+  const blob=new Blob(chunks,{type:mt}), url=URL.createObjectURL(blob);
   $('player').src=url; $('player').hidden=false;
-  $('dl').href=url; $('dl').download=`Rekaman_${($('title').value||'Rapat').replace(/[^\w]+/g,'_')}_${$('date').value}.${(rec.mimeType||'').includes('ogg')?'ogg':'webm'}`; $('dl').hidden=false;
+  $('dl').href=url; $('dl').download=`Rekaman_${($('title').value||'Rapat').replace(/[^\w]+/g,'_')}_${$('date').value}.${mt.includes('ogg')?'ogg':mt.includes('mp4')?'m4a':'webm'}`; $('dl').hidden=false;
 }
 function setUI(s){
   $('dot').className='dot'+(s==='rec'?' on':''); $('bStart').disabled=s!=='idle'; $('bStop').disabled=s==='idle'; $('bPause').disabled=s==='idle';
@@ -497,8 +525,11 @@ let installEvt=null;
 window.addEventListener('beforeinstallprompt',e=>{ e.preventDefault(); installEvt=e; $('installBtn').style.display='inline-block'; });
 $('installBtn').onclick=async()=>{ if(!installEvt) return; installEvt.prompt(); await installEvt.userChoice; installEvt=null; $('installBtn').style.display='none'; };
 window.addEventListener('appinstalled',()=>$('installBtn').style.display='none');
-try{ const st=localStorage.getItem('recAudio'); if(st!==null) $('recAudio').checked=st==='1'; }catch(e){}
-$('recAudio').onchange=()=>{ try{ localStorage.setItem('recAudio',$('recAudio').checked?'1':'0'); }catch(e){} };
+// Di HP: bawaan transkrip saja (rekaman audio bisa diaktifkan manual)
+$('recAudio').checked=!IS_MOBILE;
+if(IS_MOBILE) $('recAudioHint').textContent='(di HP, sering membuat transkrip tidak jalan)';
+try{ const st=localStorage.getItem('recAudio2'); if(st!==null) $('recAudio').checked=st==='1'; }catch(e){}
+$('recAudio').onchange=()=>{ try{ localStorage.setItem('recAudio2',$('recAudio').checked?'1':'0'); }catch(e){} };
 if(navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(()=>{}); // cegah data dihapus otomatis oleh Android
 
 loadRS(); load(cur); renderList();
