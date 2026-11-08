@@ -189,14 +189,35 @@ header .acts{display:contents}
       <div><label>Notulis</label><input id="writer"></div>
       <div><label>Jabatan Notulis</label><input id="writerJob" placeholder="Sekretaris Komite PMKP"></div>
     </div>
-    <label>Peserta — satu per baris, format: <b>Nama | Jabatan / Unit</b></label>
-    <textarea id="people" rows="5" placeholder="dr. Andi, Sp.PD | Ketua Komite Medik&#10;Ns. Rina, S.Kep | Kepala Ruang Melati"></textarea>
     <label>Agenda Rapat</label><textarea id="agenda" rows="3" placeholder="1. Evaluasi tindak lanjut rapat sebelumnya&#10;2. ..."></textarea>
   </section>
 
-  <!-- 3. Rekaman -->
+  <!-- 3. Daftar Hadir -->
+  <section class="card full" id="attCard">
+    <h2>3. Daftar Hadir Peserta</h2>
+    <p class="note" style="margin-top:0">Isi dulu sebelum rapat dimulai. Peserta yang dicentang <b>Hadir</b> otomatis menjadi tombol pilihan <b>"Siapa yang sedang bicara"</b> saat merekam.</p>
+    <div class="row">
+      <div><label>Nama</label><input id="attN" placeholder="dr. Andi, Sp.PD" autocomplete="off"></div>
+      <div><label>Jabatan / Unit</label><input id="attJ" placeholder="Ketua Komite Medik" autocomplete="off"></div>
+    </div>
+    <div class="bar" style="margin-top:8px">
+      <button class="green" onclick="addAtt()">+ Tambah ke Daftar Hadir</button>
+      <button onclick="$('bulk').hidden=!$('bulk').hidden">Tempel banyak nama</button>
+      <button onclick="attFromLast()">Ambil dari rapat terakhir</button>
+    </div>
+    <div id="bulk" hidden>
+      <label>Satu peserta per baris, format: <b>Nama | Jabatan / Unit</b></label>
+      <textarea id="bulkTxt" rows="4" placeholder="dr. Andi, Sp.PD | Ketua Komite Medik&#10;Ns. Rina, S.Kep | Kepala Ruang Melati"></textarea>
+      <button style="margin-top:6px" onclick="addBulk()">Masukkan ke Daftar Hadir</button>
+    </div>
+    <table class="ed" style="margin-top:10px"><thead><tr><th style="width:28px">No</th><th>Nama</th><th>Jabatan / Unit</th><th style="width:52px">Hadir</th><th style="width:24px"></th></tr></thead><tbody id="att"></tbody></table>
+    <div class="note" id="attCount"></div>
+  </section>
+
+  <!-- 4. Rekaman -->
   <section class="card" id="recCard">
-    <h2>3. Rekaman &amp; Transkrip Langsung</h2>
+    <h2>4. Rekaman &amp; Transkrip Langsung</h2>
+    <div class="warn" id="noAtt">Daftar hadir masih kosong. Isi <b>Daftar Hadir</b> dulu agar nama peserta bisa dipilih sebagai pembicara. <button style="margin-top:6px" onclick="$('attCard').scrollIntoView({behavior:'smooth'});setTimeout(()=>$('attN').focus(),400)">Isi Daftar Hadir</button></div>
     <div class="warn" id="warn"></div>
     <div class="bar ctl">
       <span class="dot" id="dot"></span>
@@ -226,11 +247,11 @@ header .acts{display:contents}
 
   <!-- 4. Isi -->
   <section class="card">
-    <h2>4. Evaluasi Tindak Lanjut Rapat Sebelumnya</h2>
+    <h2>5. Evaluasi Tindak Lanjut Rapat Sebelumnya</h2>
     <table class="ed"><thead><tr><th style="width:28px">No</th><th>Rencana Tindak Lanjut</th><th style="width:22%">PJ</th><th style="width:20%">Status</th><th style="width:24px"></th></tr></thead><tbody id="prev"></tbody></table>
     <button style="margin-top:6px" onclick="addRow('prev')">+ Tambah</button>
 
-    <h2 style="margin-top:16px">5. Pembahasan</h2>
+    <h2 style="margin-top:16px">6. Pembahasan</h2>
     <textarea id="summary" rows="7" placeholder="Pokok-pokok pembahasan, masalah, analisis..."></textarea>
     <button style="margin-top:6px" onclick="fillSummary()">Isi dari transkrip</button>
     <label>Kesimpulan / Keputusan / Rekomendasi</label>
@@ -238,13 +259,13 @@ header .acts{display:contents}
   </section>
 
   <section class="card full">
-    <h2>6. Rencana Tindak Lanjut (RTL)</h2>
+    <h2>7. Rencana Tindak Lanjut (RTL)</h2>
     <table class="ed"><thead><tr><th style="width:28px">No</th><th>Masalah / Kegiatan</th><th>Rencana Tindak Lanjut</th><th style="width:16%">Penanggung Jawab</th><th style="width:13%">Target Waktu</th><th style="width:12%">Status</th><th style="width:24px"></th></tr></thead><tbody id="acts"></tbody></table>
     <button style="margin-top:6px" onclick="addRow('acts')">+ Tambah RTL</button>
   </section>
 
   <section class="card">
-    <h2>7. Dokumentasi Foto</h2>
+    <h2>8. Dokumentasi Foto</h2>
     <input type="file" accept="image/*" multiple id="fotoIn">
     <div class="thumbs" id="thumbs"></div>
     <p class="note">Foto dikompres otomatis dan dicetak sebagai lampiran notulen.</p>
@@ -264,13 +285,13 @@ header .acts{display:contents}
 
 <script>
 const $ = id => document.getElementById(id);
-const FIELDS = ['no','noUnd','unit','jenis','title','std','date','time','place','leader','leaderJob','writer','writerJob','people','agenda','summary','decisions'];
+const FIELDS = ['no','noUnd','unit','jenis','title','std','date','time','place','leader','leaderJob','writer','writerJob','agenda','summary','decisions'];
 const RSF = ['rs','rsAddr','dir','dirNip'];
 const STATUS = ['Belum','Proses','Selesai'];
 let cur = blank(), rec=null, chunks=[], stream=null, sr=null, srOn=false;
 let t0=0, elapsed=0, tick=null, actx=null, raf=null, logo='';
 
-function blank(){ return {id:Date.now(), lines:[], acts:[], prev:[], fotos:[], jenis:'Rapat Rutin', date:new Date().toISOString().slice(0,10), incTr:true, incDir:true, incFoto:true}; }
+function blank(){ return {id:Date.now(), lines:[], acts:[], prev:[], fotos:[], att:[], jenis:'Rapat Rutin', date:new Date().toISOString().slice(0,10), incTr:true, incDir:true, incFoto:true}; }
 const fmt = ms => { const s=Math.floor(ms/1000); return [s/3600,s%3600/60,s%60].map(v=>String(Math.floor(v)).padStart(2,'0')).join(':'); };
 const esc = s => String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const now = () => elapsed + (t0 ? Date.now()-t0 : 0);
@@ -297,9 +318,51 @@ function renderFotos(){ $('thumbs').innerHTML=cur.fotos.map((f,i)=>`<div><img sr
 /* ---------- Data rapat ---------- */
 function load(m){
   cur=Object.assign(blank(),m); FIELDS.forEach(f=>$(f).value=cur[f]||'');
+  if(!cur.att.length && cur.people) cur.att=parseAtt(cur.people); // data lama (format teks)
   ['incTr','incDir','incFoto'].forEach(f=>$(f).checked=cur[f]!==false);
-  renderLines(); renderRows('acts'); renderRows('prev'); renderFotos();
+  $('speaker').value=''; renderAtt(); renderLines(); renderRows('acts'); renderRows('prev'); renderFotos();
 }
+
+/* ---------- Daftar Hadir ---------- */
+function parseAtt(txt){
+  return (txt||'').split('\n').map(s=>s.trim()).filter(Boolean)
+    .map(s=>{ const [n,j]=s.split('|'); return {n:(n||'').trim(), j:(j||'').trim(), h:true}; }).filter(a=>a.n);
+}
+const hasAtt=n=>cur.att.some(a=>a.n.toLowerCase()===n.toLowerCase());
+function renderAtt(){
+  $('att').innerHTML=cur.att.map((a,i)=>`<tr${a.h?'':' style="opacity:.55"'}><td style="text-align:center">${i+1}</td>
+    <td><input value="${esc(a.n)}" onchange="cur.att[${i}].n=this.value.trim();attChanged()"></td>
+    <td><input value="${esc(a.j)}" oninput="cur.att[${i}].j=this.value"></td>
+    <td style="text-align:center"><input type="checkbox" style="width:22px;height:22px" ${a.h?'checked':''} onchange="cur.att[${i}].h=this.checked;attChanged()"></td>
+    <td><button class="del" onclick="cur.att.splice(${i},1);attChanged()">✕</button></td></tr>`).join('');
+  const h=cur.att.filter(a=>a.h).length;
+  $('attCount').textContent=cur.att.length?`${h} hadir dari ${cur.att.length} peserta`:'Belum ada peserta.';
+  $('noAtt').style.display=h?'none':'block';
+}
+function attChanged(){ renderAtt(); renderLines(); }
+function addAtt(){
+  const n=$('attN').value.trim(); if(!n){ $('attN').focus(); return; }
+  if(hasAtt(n)){ alert('Nama ini sudah ada di daftar hadir.'); return; }
+  cur.att.push({n, j:$('attJ').value.trim(), h:true});
+  $('attN').value=''; $('attJ').value=''; $('attN').focus(); attChanged();
+}
+$('attN').addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); $('attJ').focus(); } });
+$('attJ').addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); addAtt(); } });
+function addBulk(){
+  const add=parseAtt($('bulkTxt').value).filter(a=>!hasAtt(a.n));
+  cur.att.push(...add); $('bulkTxt').value=''; $('bulk').hidden=true; attChanged();
+}
+function attFromLast(){
+  const m=ls.get('notulenRS',[]).find(x=>x.id!==cur.id && ((x.att&&x.att.length)||x.people));
+  if(!m) return alert('Belum ada rapat tersimpan sebelumnya.');
+  const add=((m.att&&m.att.length)?m.att:parseAtt(m.people)).filter(a=>!hasAtt(a.n)).map(a=>({n:a.n,j:a.j,h:true}));
+  cur.att.push(...add); attChanged();
+  alert(`${add.length} nama diambil dari rapat "${m.title||'tanpa judul'}". Hilangkan centang Hadir untuk yang tidak datang.`);
+}
+// Pimpinan rapat & notulis otomatis masuk daftar hadir
+[['leader','leaderJob'],['writer','writerJob']].forEach(([f,j])=>$(f).addEventListener('change',()=>{
+  const n=$(f).value.trim(); if(n && !hasAtt(n)){ cur.att.push({n, j:$(j).value.trim(), h:true}); attChanged(); }
+}));
 function collect(){ FIELDS.forEach(f=>cur[f]=$(f).value); ['incTr','incDir','incFoto'].forEach(f=>cur[f]=$(f).checked); }
 function save(silent){
   collect(); const all=ls.get('notulenRS',[]).filter(x=>x.id!==cur.id); all.unshift(cur);
@@ -315,7 +378,8 @@ function newMeeting(){ if(confirm('Mulai rapat baru? Data yang belum disimpan ak
 // Rapat lanjutan: RTL rapat lama otomatis jadi "Evaluasi Tindak Lanjut Rapat Sebelumnya"
 function carry(id){
   const m=ls.get('notulenRS',[]).find(x=>x.id===id); if(!m||!confirm('Buat rapat baru dan bawa RTL dari rapat ini untuk dievaluasi?')) return;
-  const n=blank(); Object.assign(n,{unit:m.unit,jenis:m.jenis,place:m.place,leader:m.leader,leaderJob:m.leaderJob,writer:m.writer,writerJob:m.writerJob,people:m.people,std:m.std,
+  const n=blank(); Object.assign(n,{unit:m.unit,jenis:m.jenis,place:m.place,leader:m.leader,leaderJob:m.leaderJob,writer:m.writer,writerJob:m.writerJob,std:m.std,
+    att:((m.att&&m.att.length)?m.att:parseAtt(m.people)).map(a=>({n:a.n,j:a.j,h:true})),
     agenda:'1. Evaluasi tindak lanjut rapat sebelumnya\n2. ',
     prev:(m.acts||[]).map(a=>({task:[a.issue,a.task].filter(Boolean).join(' — '),pic:a.pic,status:a.status||'Belum'}))});
   load(n);
@@ -334,22 +398,23 @@ function addRow(k){ cur[k].push({issue:'',task:'',pic:'',due:'',status:'Belum'})
 
 /* ---------- Transkrip ---------- */
 /* ---------- Nama pembicara ---------- */
-// Daftar nama: pimpinan rapat, peserta, lalu nama yang sudah dipakai di transkrip
+// Daftar nama pembicara diambil dari Daftar Hadir (yang dicentang hadir),
+// ditambah nama yang sudah dipakai di transkrip / diketik manual
 function speakers(){
-  return [...new Set([$('leader').value, ...($('people').value||'').split('\n').map(p=>p.split('|')[0]), $('writer').value,
-    ...cur.lines.map(l=>l.s), $('speaker').value].map(s=>(s||'').trim()).filter(Boolean))];
+  return [...new Set([...cur.att.filter(a=>a.h).map(a=>a.n), ...cur.lines.map(l=>l.s), $('speaker').value]
+    .map(s=>(s||'').trim()).filter(Boolean))];
 }
 const SPK_COLORS=['#0f766e','#c62828','#1f5fbf','#b45309','#7b1fa2','#2e7d32','#ad1457','#455a64','#00838f','#6d4c41'];
 const spkColor=s=>{ if(!s) return 'transparent'; const i=speakers().indexOf(s); return SPK_COLORS[(i<0?0:i)%SPK_COLORS.length]; };
 function renderChips(){
   const curS=$('speaker').value.trim();
-  $('spkChips').innerHTML=speakers().map(s=>`<button class="chip${s===curS?' on':''}" style="${s===curS?'':'border-color:'+spkColor(s)}" data-s="${esc(s)}">${esc(s)}</button>`).join('')
+  const job=n=>(cur.att.find(a=>a.n===n)||{}).j||'';
+  $('spkChips').innerHTML=speakers().map(s=>`<button class="chip${s===curS?' on':''}" style="${s===curS?'':'border-color:'+spkColor(s)}" data-s="${esc(s)}" title="${esc(job(s))}">${esc(s)}${job(s)?`<br><small style="opacity:.75">${esc(job(s))}</small>`:''}</button>`).join('')
     +`<button class="chip none${curS?'':' on'}" data-s="">Tanpa nama</button>`;
   $('spkList').innerHTML=speakers().map(s=>`<option value="${esc(s)}">`).join('');
 }
 $('spkChips').addEventListener('click',e=>{ const b=e.target.closest('.chip'); if(!b) return; $('speaker').value=b.dataset.s; renderChips(); });
 $('speaker').addEventListener('input',renderChips);
-['people','leader','writer'].forEach(f=>$(f).addEventListener('input',()=>{ renderChips(); }));
 function setLineSpk(i,v){ cur.lines[i].s=v; renderLines(); }
 
 function renderLines(){
@@ -361,7 +426,6 @@ function renderLines(){
   renderChips();
   const b=$('transcript'); b.scrollTop=b.scrollHeight;
 }
-$('people').addEventListener('change',renderLines);
 function pushLine(text){
   text=text.trim(); if(!text) return;
   // Chrome Android kadang mengirim kalimat yang sama berulang/menumpuk: gabungkan
@@ -474,7 +538,8 @@ function meter(){
 }
 
 /* ---------- Ekspor ---------- */
-const peserta = () => (cur.people||'').split('\n').map(s=>s.trim()).filter(Boolean).map(s=>{ const [n,j]=s.split('|'); return {n:(n||'').trim(), j:(j||'').trim()}; });
+const peserta = () => cur.att.filter(a=>a.h && a.n).map(a=>({n:a.n, j:a.j}));   // yang hadir
+const undangan = () => cur.att.filter(a=>a.n).map(a=>({n:a.n, j:a.j}));          // semua yang diundang
 function exportTxt(){
   collect(); const r=ls.get('rsInfo',{});
   const t=`${r.rs||''}\nNOTULEN RAPAT  No. ${cur.no||'-'}\n\nKomite/Pokja : ${cur.unit||'-'}\nJenis Rapat  : ${cur.jenis}\nPerihal      : ${cur.title||'-'}\nStandar/EP   : ${cur.std||'-'}\nHari/Tanggal : ${tgl(cur.date)}\nWaktu        : ${cur.time||'-'}\nTempat       : ${cur.place||'-'}\nPimpinan     : ${cur.leader||'-'} (${cur.leaderJob||''})\nNotulis      : ${cur.writer||'-'} (${cur.writerJob||''})\n\nPESERTA\n${peserta().map((p,i)=>`${i+1}. ${p.n} — ${p.j}`).join('\n')||'-'}\n\nAGENDA\n${cur.agenda||'-'}\n\nEVALUASI TINDAK LANJUT RAPAT SEBELUMNYA\n${cur.prev.map((a,i)=>`${i+1}. ${a.task} | PJ: ${a.pic} | ${a.status}`).join('\n')||'-'}\n\nPEMBAHASAN\n${cur.summary||'-'}\n\nKESIMPULAN / REKOMENDASI\n${cur.decisions||'-'}\n\nRENCANA TINDAK LANJUT\n${cur.acts.map((a,i)=>`${i+1}. ${a.issue} → ${a.task} | PJ: ${a.pic} | Target: ${tglS(a.due)} | ${a.status}`).join('\n')||'-'}\n\nTRANSKRIP\n${cur.lines.map(l=>`[${fmt(l.t)}] ${l.s?l.s+': ':''}${l.x}`).join('\n')}`;
@@ -499,7 +564,7 @@ function pUndangan(r){
   ${cur.agenda?`<p>Dengan agenda:</p><div class="pre" style="margin-left:30px">${esc(cur.agenda)}</div>`:''}
   <p>Mengingat pentingnya acara tersebut, kami mengharapkan kehadiran Bapak/Ibu tepat waktu. Atas perhatian dan kehadirannya kami ucapkan terima kasih.</p>
   <div class="ttd"><div></div>${ttdBox(tglS(cur.date)+'<br>'+(cur.leaderJob?'':'Pimpinan Rapat,'),cur.leader,cur.leaderJob?cur.leaderJob+',':'','')}</div>
-  ${peserta().length?`<div class="pb"></div><h3>Lampiran: Daftar Undangan</h3><table class="grid"><tr><th style="width:36px">No</th><th>Nama</th><th>Jabatan / Unit</th></tr>${peserta().map((p,i)=>`<tr><td style="text-align:center">${i+1}</td><td>${esc(p.n)}</td><td>${esc(p.j)}</td></tr>`).join('')}</table>`:''}`;
+  ${undangan().length?`<div class="pb"></div><h3>Lampiran: Daftar Undangan</h3><table class="grid"><tr><th style="width:36px">No</th><th>Nama</th><th>Jabatan / Unit</th></tr>${undangan().map((p,i)=>`<tr><td style="text-align:center">${i+1}</td><td>${esc(p.n)}</td><td>${esc(p.j)}</td></tr>`).join('')}</table>`:''}`;
 }
 function pHadir(r,first){
   const ppl=peserta(), rows=Math.max(ppl.length+3,10);
