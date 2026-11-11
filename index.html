@@ -696,7 +696,7 @@ const undangan = () => cur.att.filter(a=>a.n).map(a=>({n:a.n, j:a.j}));         
 function exportTxt(){
   collect(); const r=ls.get('rsInfo',{});
   const t=`${r.rs||''}\nNOTULEN RAPAT  No. ${cur.no||'-'}\n\nKomite/Pokja : ${cur.unit||'-'}\nJenis Rapat  : ${cur.jenis}\nPerihal      : ${cur.title||'-'}\nStandar/EP   : ${cur.std||'-'}\nHari/Tanggal : ${tgl(cur.date)}\nWaktu        : ${cur.time||'-'}\nTempat       : ${cur.place||'-'}\nPimpinan     : ${cur.leader||'-'} (${cur.leaderJob||''})\nNotulis      : ${cur.writer||'-'} (${cur.writerJob||''})\n\nPESERTA\n${peserta().map((p,i)=>`${i+1}. ${p.n} — ${p.j}`).join('\n')||'-'}\n\nAGENDA\n${cur.agenda||'-'}\n\nEVALUASI TINDAK LANJUT RAPAT SEBELUMNYA\n${cur.prev.map((a,i)=>`${i+1}. ${a.task} | PJ: ${a.pic} | ${a.status}`).join('\n')||'-'}\n\nPEMBAHASAN\n${cur.summary||'-'}\n\nKESIMPULAN / REKOMENDASI\n${cur.decisions||'-'}\n\nRENCANA TINDAK LANJUT\n${cur.acts.map((a,i)=>`${i+1}. ${a.issue} → ${a.task} | PJ: ${a.pic} | Target: ${tglS(a.due)} | ${a.status}`).join('\n')||'-'}\n\nTRANSKRIP\n${cur.lines.map(l=>`[${fmt(l.t)}] ${l.s?l.s+': ':''}${l.x}`).join('\n')}`;
-  const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([t],{type:'text/plain'})); a.download=`Notulen_${(cur.title||'Rapat').replace(/[^\w]+/g,'_')}_${cur.date}.txt`; a.click();
+  const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([t],{type:'text/plain'})); a.download=docTitle('notulen')+'.txt'; a.click();
 }
 
 /* ---------- Cetak ---------- */
@@ -759,10 +759,19 @@ function pNotulen(r){
   if(cur.incTr&&cur.lines.length) h+=`<div class="pb"></div><h3>Lampiran: Transkrip Rapat</h3><div class="tr">${cur.lines.map(l=>`<p>[${fmt(l.t)}] ${l.s?`<b>${esc(l.s)}:</b> `:''}${esc(l.x)}</p>`).join('')}</div>`;
   return h;
 }
+// Nama file per dokumen, mis. "Notulen - Evaluasi Indikator Mutu - 9 November 2026"
+const DOC_NAME={notulen:'Notulen', hadir:'Daftar Hadir', undangan:'Undangan'};
+function docTitle(kind){
+  const safe=s=>String(s||'').replace(/[\\/:*?"<>|\r\n]+/g,' ').replace(/\s+/g,' ').trim();
+  return [DOC_NAME[kind]||'Notulen', safe(cur.title)||'Rapat', cur.date?tglS(cur.date):''].filter(Boolean).join(' - ');
+}
+const APP_TITLE=document.title;
+window.addEventListener('afterprint',()=>{ document.title=APP_TITLE; });
 function doPrint(kind){
   collect(); saveRS(); const r=ls.get('rsInfo',{});
   $('print').innerHTML = kind==='undangan'?pUndangan(r) : kind==='hadir'?pHadir(r,true) : pNotulen(r);
-  setTimeout(()=>window.print(),150);
+  document.title=docTitle(kind); // dipakai Chrome sebagai nama file saat "Simpan sebagai PDF"
+  setTimeout(()=>window.print(),150); // judul dikembalikan lewat event afterprint
 }
 
 /* ---------- Pasang sebagai aplikasi (PWA) ---------- */

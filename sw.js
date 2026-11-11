@@ -1,5 +1,5 @@
 // Service worker: simpan file aplikasi agar bisa dibuka tanpa internet
-const CACHE = 'notulen-rs-v6';
+const CACHE = 'notulen-rs-v7';
 const FILES = ['./', './index.html', './manifest.webmanifest', './logo.png', './icon-192.png', './icon-512.png', './icon-maskable.png'];
 
 self.addEventListener('install', e => {
